@@ -7,9 +7,10 @@ import threading
 
 class Audio(threading.Thread):
 
-    def __init__(self, result_queue):
+    def __init__(self, result_queue, queries):
         super(Audio, self).__init__()
         self.result_queue = result_queue #type queue.Queue
+        self.queries = queries
         # variables
         r = sr.Recognizer()
         m = sr.Microphone()
@@ -18,7 +19,7 @@ class Audio(threading.Thread):
             r.adjust_for_ambient_noise(source) # we only need to calibrate once, before we start listening
 
         # start listening in the background (note that we don't have to do this inside a `with` statement)
-        stop_listening = r.listen_in_background(m, self.audio_callback)
+        self.stop_listening = r.listen_in_background(m, self.audio_callback)
         # `stop_listening` is now a function that, when called, stops background listening
 
         # start some loop.
@@ -43,36 +44,27 @@ class Audio(threading.Thread):
 
 
     def test_string(self, string):
-        queries = [
-            "hello annie how many people are in the house".split(" "),
-            "ani do you know anyone in the house".split(" "),
-            "what do you know about michelle".split(" "),
-            "do you know who is in my bedroom".split(" "),
-            "the person in my bedroom is named sebastien".split(" "),
-            "tell me about sebastien".split(" "),
-            "thank you annie".split(" ")
-        ]
         spoken = string.split(' ')
-        confidences = [None] * 7
+        confidences = [None] * len(self.queries)
         # print(queries)
 
-        for index, phrase in enumerate(queries):
-            confidences[index] = difflib.SequenceMatcher(None, spoken, phrase).ratio()
+        for index, phrase in enumerate(self.queries):
+            confidences[index] = difflib.SequenceMatcher(None, spoken, [phrase]).ratio()
 
         max_conf = self.assessProbability(confidences)[0]
 
-        print(confidences)
-        print(max_conf)
+        # print(confidences)
+        # print(max_conf)
         # ensure confidences is acceptable
         if confidences[max_conf] >= 0.25:
             # return best result
             print('\nRESULT')
             print('I have matched your query to:')
             print('option ' + str(max_conf + 1) + ":")
-            print(" ".join(queries[max_conf]))
+            print(" ".join(self.queries[max_conf]))
             print("with " + str(confidences[max_conf]) + " confidence.")
             # return max_conf + 1
-            return " ".join(queries[max_conf])
+            return self.queries[max_conf]
         else:
             return False
 
@@ -89,7 +81,9 @@ class Audio(threading.Thread):
             spoken = recognizer.recognize_google(audio)
             print("Google Speech Recognition thinks you said: " + spoken)
             if spoken is not None:
-                self.result_queue.put(spoken)
+                parsed_result = self.test_string(spoken)
+                if parsed_result is not False:
+                    self.result_queue.put(parsed_result)
         except sr.UnknownValueError:
             print("Google Speech Recognition could not understand audio")
         except sr.RequestError as e:
