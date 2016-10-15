@@ -2,14 +2,17 @@
 import speech_recognition as sr
 import difflib
 import time
+import queue
+import threading
 
-class Audio():
+class Audio(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, result_queue):
+        super(Audio, self).__init__()
+        self.result_queue = result_queue #type queue.Queue
         # variables
         r = sr.Recognizer()
         m = sr.Microphone()
-        self.logic = Logic()
         print('listening...')
         with m as source:
             r.adjust_for_ambient_noise(source) # we only need to calibrate once, before we start listening
@@ -19,10 +22,10 @@ class Audio():
         # `stop_listening` is now a function that, when called, stops background listening
 
         # start some loop.
-        while True:
-            time.sleep(0.1)
-
-        stop_listening() # calling this function requests that the background listener stop listening
+        # while True:
+        #     time.sleep(0.1)
+        #
+        # stop_listening() # calling this function requests that the background listener stop listening
 
     def assessProbability(self, probs):
         ''' Return list of position(s) of largest probability '''
@@ -51,7 +54,7 @@ class Audio():
         ]
         spoken = string.split(' ')
         confidences = [None] * 7
-        print(queries)
+        # print(queries)
 
         for index, phrase in enumerate(queries):
             confidences[index] = difflib.SequenceMatcher(None, spoken, phrase).ratio()
@@ -68,7 +71,8 @@ class Audio():
             print('option ' + str(max_conf + 1) + ":")
             print(" ".join(queries[max_conf]))
             print("with " + str(confidences[max_conf]) + " confidence.")
-            return max_conf + 1
+            # return max_conf + 1
+            return " ".join(queries[max_conf])
         else:
             return False
 
@@ -76,20 +80,22 @@ class Audio():
     # this is called from the background thread
     def audio_callback(self, recognizer, audio):
         # # received audio data, now we'll recognize it using Google Speech Recognition
+        spoken = None
         try:
             # for testing purposes, we're just using the default API key
             # to use another API key, use `r.recognize_google(audio, key="GOOGLE_SPEECH_RECOGNITION_API_KEY")`
             # instead of `r.recognize_google(audio)`
 
-            spoken = None
             spoken = recognizer.recognize_google(audio)
             print("Google Speech Recognition thinks you said: " + spoken)
+            if spoken is not None:
+                self.result_queue.put(spoken)
         except sr.UnknownValueError:
             print("Google Speech Recognition could not understand audio")
         except sr.RequestError as e:
             print("Could not request results from Google Speech Recognition service; {0}".format(e))
 
-        if len(spoken) > 0:
-            return spoken
-        else:
-            return None
+
+            # if self.test_string(spoken) is not False:
+            #     self.result_queue.put(spoken)
+            #     print("spoken was " + self.test_string(spoken))
