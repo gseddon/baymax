@@ -20,6 +20,7 @@ class Audio(threading.Thread):
 
         # start listening in the background (note that we don't have to do this inside a `with` statement)
         self.stop_listening = r.listen_in_background(m, self.audio_callback)
+
         # `stop_listening` is now a function that, when called, stops background listening
 
         # start some loop.

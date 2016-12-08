@@ -4,47 +4,67 @@ import speech_recognition as sr
 import difflib
 from Audio import Audio
 import queue
+from pygame import mixer
+import pygame
+from RPi import GPIO
+from time import sleep
 
+recogniser = None
+queries = None
 
-# class Baymax():
-#
-#     def __init__(self):
-#         pass
-#
-#     audioListener = Audio()
 def main():
-    queries = [
-        "start",
-        "stop",
-        "inflate",
-        "how are you"
-    ] # these are the strings that we want the voice recognition to match against
     queries = {"start": start,
                "stop": stop,
+               "hello": hello,
                "inflate": inflate,
                "how are you": how_are_you}
-    print(queries)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(11, GPIO.OUT)
     result_queue = queue.Queue()
-    # audioListener = Audio(result_queue)
-    Audio(result_queue, list(queries.keys())).start()
+    recogniser = Audio(result_queue, list(queries.keys())).start()
+    pygame.init()
+    hello()
     while 1:
         result = result_queue.get(True)
         print("main thread got " + result)
         queries[result]()
 
+def hello():
+    toggle_pin_play_sound_duration(pin = 11, sound = "hello_baymax.mp3", duration=5)
+
 def start():
-    print("I'm going to start inflating")
+
     pass
 
 def stop():
     pass
 
 def inflate():
-    pass
+    print("inflate")
+    toggle_pin_play_sound_duration(pin= 11, sound = "openingSound.mp3", duration=5)
+    queries = {"start": start,
+               "deflate": deflate,
+               "can you scan me" : scan}
+    recogniser.queries = queries.keys()
+
+def deflate():
+    print("deflate")
+
+def scan():
+    toggle_pin_play_sound_duration(11, "ratePain.mp3", duration=4)
+    queries = {"1", 1}
+
 
 def how_are_you():
     pass
 
+def toggle_pin_play_sound_duration(pin, sound, duration):
+    mixer.music.load("assets/"+sound)
+    mixer.music.play()
+    GPIO.output(pin, GPIO.HIGH)
+    sleep(duration)
+    mixer.music.stop()
+    GPIO.output(pin, GPIO.LOW)
 
 if __name__ == '__main__':
     # Baymax()
