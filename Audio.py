@@ -28,8 +28,10 @@ class Audio(threading.Thread):
         #     time.sleep(0.1)
         #
         # stop_listening() # calling this function requests that the background listener stop listening
+    def update_queries(self, queries_dictionary):
+        self.queries = list(queries_dictionary.keys())
 
-    def assessProbability(self, probs):
+    def assess_probability(self, probs):
         ''' Return list of position(s) of largest probability '''
         max_indices = []
         if probs:
@@ -44,25 +46,22 @@ class Audio(threading.Thread):
         return max_indices
 
 
-    def test_string(self, string):
-        spoken = string.split(' ')
+    def test_string(self, spoken):
         confidences = [None] * len(self.queries)
         # print(queries)
 
         for index, phrase in enumerate(self.queries):
-            confidences[index] = difflib.SequenceMatcher(None, spoken, [phrase]).ratio()
+            confidences[index] = difflib.SequenceMatcher(None, spoken, phrase).ratio()
 
-        max_conf = self.assessProbability(confidences)[0]
+        max_conf = self.assess_probability(confidences)[0]
 
-        # print(confidences)
-        # print(max_conf)
         # ensure confidences is acceptable
         if confidences[max_conf] >= 0.25:
             # return best result
             print('\nRESULT')
             print('I have matched your query to:')
             print('option ' + str(max_conf + 1) + ":")
-            print(" ".join(self.queries[max_conf]))
+            print(self.queries[max_conf])
             print("with " + str(confidences[max_conf]) + " confidence.")
             # return max_conf + 1
             return self.queries[max_conf]
@@ -94,3 +93,4 @@ class Audio(threading.Thread):
             # if self.test_string(spoken) is not False:
             #     self.result_queue.put(spoken)
             #     print("spoken was " + self.test_string(spoken))
+
