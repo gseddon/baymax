@@ -13,12 +13,15 @@ class Baymax():
     queries = None
 
     def __init__(self):
-        self.queries = {"start": self.start,
-                   "stop": self.stop,
-                   "hello": self.hello,
-                   "inflate": self.inflate,
-                   "ouch": self.inflate,
-                   "how are you": self.how_are_you}
+        self.queries = {
+            "start": self.start,
+            "stop": self.stop,
+            "hello": self.hello,
+            "inflate": self.inflate,
+            "ouch": self.inflate,
+            "how are you": self.how_are_you,
+            "deflate": self.deflate,
+        }
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(11, GPIO.OUT)
         GPIO.setup(10, GPIO.OUT)
@@ -28,10 +31,10 @@ class Baymax():
         self.recogniser = Audio(result_queue, list(self.queries.keys()))
         self.recogniser.start()
         pygame.init()
-        self.play_sound_duration('care.mp3',2)
-        sleep(1)
-        self.play_sound_duration('hello_baymax.mp3',2)
-        sleep(1)
+        #self.play_sound_duration('care.mp3',2)
+        #sleep(1)
+        #self.play_sound_duration('hello_baymax.mp3',2)
+        #sleep(1)
         while 1:
             result = result_queue.get(True)
             self.queries[result]()
