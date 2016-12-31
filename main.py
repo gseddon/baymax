@@ -64,9 +64,11 @@ class Baymax():
         GPIO.output(10, GPIO.HIGH)
         GPIO.output(11, GPIO.LOW)
         sleep(180)
-        GPIO.output(11, GPIO.HIGH)
+        GPIO.output(11, GPIO.LOW)
         GPIO.output(10, GPIO.LOW)
-        sleep(180)
+        # sleep(180)
+        print("G00d by3 :)")
+        quit()
 
     def rate_pain(self):
         print("rate pain")
